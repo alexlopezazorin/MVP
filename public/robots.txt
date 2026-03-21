@@ -1,0 +1,7 @@
+User-agent: Googlebot
+Disallow: /nogooglebot/
+
+User-agent: *
+Allow: /
+
+Sitemap: https://humongous-jumpy-owl-7nd8xp.teleporthq.app/sitemap.xml
