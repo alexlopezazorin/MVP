@@ -1,8 +1,15 @@
 //individual progress page
-export default function Home() {
+export default async function IndividualProgress() {
+
+  const user = await getUser()
+
+  if (!user) {
+    redirect("/")
+  }
+  
   return (
     <div>
-      <h1>progress page</h1>
+      <h1>Individual progress page</h1>
     </div>
   );
 }
