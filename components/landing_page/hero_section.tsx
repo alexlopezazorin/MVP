@@ -4,7 +4,7 @@ import { LogIn } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-linear-to-b from-background via-background to-muted">
+    <section className="relative overflow-hidden bg-backgorund">
     <div className="wrapper" >
         <div className="flex flex-col items-center justify-center lg:py24 py12 text-center">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 max-w-5xl">

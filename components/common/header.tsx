@@ -18,8 +18,6 @@ const Logo = () => {
 
 export default function Header() {
 
-    const isSigned = false;
-
     return(
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-background-filter:bg-background/60">
             <div className="wrapper px-12">
@@ -31,7 +29,7 @@ export default function Header() {
                             <span>Home</span>
                         </Link>
                         <div className="flex items-center gap-3">
-                            {isSigned === false && <Button>Sign In</Button>}
+                            <Button>Sign In</Button>
                         </div>
                     </nav>
                 </div>
