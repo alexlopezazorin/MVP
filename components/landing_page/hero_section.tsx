@@ -14,7 +14,7 @@ export default function HeroSection() {
                 Join GuiTeach today and start your journey towards fluency with personalized private lessons tailored to your specific goals and pace.
             </p>
             <Button className="size-lg">
-                <LogIn className="w-6 h-6" />Log in
+                <LogIn className="w-6 h-6" />Sign In
             </Button>
         </div>
     </div>
