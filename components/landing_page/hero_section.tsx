@@ -1,5 +1,6 @@
 import {Button} from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import LoginForm from "@/features/auth/components/LoginForm"
 
 
 export default function HeroSection() {
@@ -16,6 +17,7 @@ export default function HeroSection() {
             <Button className="size-lg">
                 <LogIn className="w-6 h-6" />Sign In
             </Button>
+            <LoginForm />
         </div>
     </div>
     </section>
