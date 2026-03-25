@@ -1,5 +1,6 @@
-import { getUser } from "@/./lib/getUser"
+import { getUser } from "@/lib/getUser"
 import { redirect } from "next/navigation"
+import Dashboard from "@/components/dashboard/dashboard"
 
 export default async function DashboardPage() {
 
@@ -9,9 +10,9 @@ export default async function DashboardPage() {
     redirect("/")
   }
   
-  return (
-    <div>
-      <h1>Dashboard page</h1>
-    </div>
-  );
+    return (
+      <div>
+        <Dashboard />
+      </div>
+    )
 }

@@ -1,7 +1,8 @@
-import { getUser } from "@/./lib/getUser"
+import { getUser } from "@/lib/getUser"
 import { redirect } from "next/navigation"
+import IndividualProgress from "@/components/dashboard/individual_progress/individual_progress"
 
-export default async function IndividualProgress() {
+export default async function IndividualProgressPage() {
 
   const user = await getUser()
 
@@ -11,7 +12,7 @@ export default async function IndividualProgress() {
   
   return (
     <div>
-      <h1>Individual progress page</h1>
+      <IndividualProgress />
     </div>
   );
 }

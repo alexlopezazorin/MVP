@@ -1,7 +1,7 @@
 import {SparkleIcon, HomeIcon} from "lucide-react"
 import Link from "next/link"
 import {Button} from "@/components/ui/button";
-import LogoutButton from "./logout_button"
+import LogoutButton from "./logout_button";
 import { getUser } from "@/lib/getUser"
 
 
