@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function Dashboard() {
+export default function Dashboard({ role }: { role: string }) {
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="wrapper">
@@ -23,6 +23,16 @@ export default function Dashboard() {
                 Go to Individual Progress
               </Button>
             </Link>
+            
+            {role === "teacher" && (
+              <Link href="/dashboard/students_statistics">
+                <Button variant="primary">
+                  Go to Students Statistics
+                </Button>
+              </Link>
+            )}
+
+
           </div>
 
         </div>

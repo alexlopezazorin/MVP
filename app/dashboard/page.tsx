@@ -4,15 +4,15 @@ import Dashboard from "@/components/dashboard/dashboard"
 
 export default async function DashboardPage() {
 
-  const user = await getUser()
+  const userData = await getUser()
 
-  if (!user) {
+  if (!userData) {
     redirect("/")
   }
   
     return (
       <div>
-        <Dashboard />
+        <Dashboard role={userData.profile.role} />
       </div>
     )
 }
