@@ -4,10 +4,14 @@ import IndividualProgress from "@/components/dashboard/individual_progress/indiv
 
 export default async function IndividualProgressPage() {
 
-  const user = await getUser()
+  const userData = await getUser()
 
-  if (!user) {
+  if (!userData) {
     redirect("/")
+  }
+
+  if (!userData.profile.student_level) {
+    redirect("/dashboard")
   }
   
   return (
