@@ -1,24 +1,20 @@
 import { getUser } from "@/lib/getUser"
 import { redirect } from "next/navigation"
-import SpeakingChat from "@/components/dashboard/speaking_chat/speaking_chat"
+import { createSession } from "@/features/speaking_chat/actions/createSession"
 
-export default async function SpeakingPage() {
+export default async function SpeakingChatEntryPage() {
 
   const userData = await getUser()
 
   if (!userData) {
     redirect("/")
   }
-  
 
   if (!userData.profile.student_level) {
     redirect("/dashboard")
   }
 
+  const sessionId = await createSession(userData.user.id)
 
-  return (
-    <div>
-      <SpeakingChat />
-    </div>
-  );
+  redirect(`/dashboard/speaking_chat/${sessionId}`)
 }
