@@ -8,11 +8,13 @@ import ChatTyping from "@/components/dashboard/speaking_chat/chat_typing"
 import { endSession } from "@/features/speaking_chat/actions/endSession"
 import { updateLastSeen } from "@/features/speaking_chat/actions/updateLastSeen"
 import type { ChatMessageType } from "./chat_types"
+import { getStudentLevel } from "@/features/users/action/getstudentLevel"
+import { getVapi } from "@/features/speaking_chat/actions/startVapi"
 
 export default function SpeakingChat({ sessionId }: { sessionId: string }) {
   const router = useRouter()
 
-  const [messages, setMessages] = useState<ChatMessageType[]>([ {sender: "ai", text: "Hello! Tap the microphone and start speaking."},{sender: "user", text: "Hi! I'm Alejandro."}])
+  const [messages, setMessages] = useState<ChatMessageType[]>([ {sender: "ai", text: "Wait for the assistant to say something..."},{sender: "ai", text: "Then press the microphone to respond."} ])
   
   const [isListening, setIsListening] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
@@ -20,9 +22,12 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
   const chatRef = useRef<HTMLDivElement>(null)
 
   const handleBack = async () => {
+    getVapi().stop()
     await endSession(sessionId)
     router.push("/dashboard")
   }
+
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,6 +35,45 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     }, 15000)
     return () => clearInterval(interval)
   }, [sessionId])
+
+  useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+
+    const initVapi = async () => {
+    const level = await getStudentLevel()
+    const message = `The student's level is ${level} and the sessionId is ${sessionId}.`
+    const vapi = getVapi()
+
+    vapi.on("message", (msg: any) => {
+
+      if (msg.type === "transcript" && msg.role === "user") {
+        setMessages(prev => [...prev, { sender: "user", text: msg.transcript }])
+        setIsTyping(true)
+      }
+
+      if (msg.type === "transcript" &&  msg.role === "assistant") {
+        setMessages(prev => [...prev, { sender: "ai", text: msg.transcript }])
+        setIsTyping(false)
+      }
+    })
+
+    vapi.on("call-start", () => {
+      vapi.send({
+        type: "add-message",
+        message: {
+          role: "user",
+          content: message
+        }
+      })
+    })
+
+    vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!)
+    }
+
+    initVapi()
+  }, [sessionId])
+
 
   useEffect(() => {
     if (chatRef.current) {
