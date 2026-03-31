@@ -38,8 +38,8 @@ export default async function Page(props: { params: Promise<{ sessionId: string 
     }
 
     return (
-    <div>
-        <SpeakingChat sessionId={sessionId} />
-    </div>
+        <div>
+            <SpeakingChat sessionId={sessionId} />
+        </div>
     )
 }
