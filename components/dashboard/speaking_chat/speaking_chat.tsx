@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowLeft, Mic } from "lucide-react"
+import { ArrowLeft, Mic, SendHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 import ChatMessage from "@/components/dashboard/speaking_chat/chat_message"
 import ChatTyping from "@/components/dashboard/speaking_chat/chat_typing"
@@ -18,6 +18,8 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
   
   const [isListening, setIsListening] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [inputText, setInputText] = useState("")
+  const [isRecording, setIsRecording] = useState(false)
 
   const chatRef = useRef<HTMLDivElement>(null)
 
@@ -59,6 +61,7 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     })
 
     vapi.on("call-start", () => {
+      vapi.setMuted(true)
       vapi.send({
         type: "add-message",
         message: {
@@ -82,7 +85,17 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
   }, [messages, isTyping])
 
   const handleMicPress = () => {
-    setIsListening((prev) => !prev)
+    const vapi = getVapi()
+
+    if (!isRecording) {
+      vapi.setMuted(false)
+      setIsRecording(true)
+      setIsListening(true)
+    } else {
+      vapi.setMuted(true)
+      setIsRecording(false)
+      setIsListening(false)
+    }
   }
 
   return (
@@ -107,10 +120,37 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
             {isTyping && <ChatTyping />}
           </div>
           
-          <div className="w-full max-w-xl flex justify-center mt-6">
-            <button onClick={handleMicPress} className={"cursor-pointer w-14 h-14 flex items-center justify-center rounded-full shadow-lg " + (isListening? "bg-red-500 text-white": "bg-primary text-primary-foreground")}>
-              <Mic size={26} />
-            </button>
+          <div className="w-full max-w-xl flex items-center gap-3 mt-6">
+
+            <input
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Type your message or unmute the mic to start speaking..."
+              className="flex-1 px-4 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+
+            {inputText.trim().length === 0 ? (
+              <button
+                onClick={handleMicPress}
+                className={"cursor-pointer w-14 h-14 flex items-center justify-center rounded-full shadow-lg " + (isRecording? "bg-red-500 text-white": "bg-primary text-primary-foreground")}
+              >
+                <Mic size={26} />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const vapi = getVapi()
+                  setMessages(prev => [...prev, { sender: "user", text: inputText }])
+                  vapi.send({type: "add-message", message: { role: "user", content: inputText }})
+
+                  setInputText("")
+                }}
+                className="cursor-pointer w-14 h-14 flex items-center justify-center rounded-full shadow-lg bg-primary text-primary-foreground"
+              >
+                <SendHorizontal  size={26} />
+              </button>
+            )}
+
           </div>
 
         </div>
