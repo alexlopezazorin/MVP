@@ -14,14 +14,15 @@ import { getVapi } from "@/features/speaking_chat/actions/startVapi"
 export default function SpeakingChat({ sessionId }: { sessionId: string }) {
   const router = useRouter()
 
-  const [messages, setMessages] = useState<ChatMessageType[]>([ {sender: "ai", text: "Wait for the assistant to say something..."},{sender: "ai", text: "Then press the microphone to respond."} ])
+  const [messages, setMessages] = useState<ChatMessageType[]>([ {sender: "ai", text: "Wait for the assistant to say something..."}])
   
-  const [isListening, setIsListening] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [inputText, setInputText] = useState("")
   const [isRecording, setIsRecording] = useState(false)
-
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunks = useRef<Blob[]>([])
   const chatRef = useRef<HTMLDivElement>(null)
+  const initializedRef = useRef(false)
 
   const handleBack = async () => {
     getVapi().stop()
@@ -29,7 +30,59 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     router.push("/dashboard")
   }
 
-  const initializedRef = useRef(false)
+  const handleMicPress = async () => {
+    // Si NO estamos grabando → comenzar grabación
+    if (!isRecording) {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+
+      audioChunks.current = []
+
+      recorder.ondataavailable = (e) => {
+        audioChunks.current.push(e.data)
+      }
+
+      recorder.start()
+      mediaRecorderRef.current = recorder
+
+      setIsRecording(true)
+      return
+    }
+
+    // Si YA estamos grabando → detener, transcribir, enviar
+    mediaRecorderRef.current?.stop()
+
+    mediaRecorderRef.current!.onstop = async () => {
+      const blob = new Blob(audioChunks.current, { type: "audio/webm" })
+
+      const formData = new FormData()
+      formData.append("audio", blob, "audio.webm")
+
+      //Transcribir vía Whisper API
+      const res = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+      const text = data.text || ""
+
+      if (!text.trim()) return
+
+      //Añadir mensaje del usuario al chat
+      setMessages(prev => [...prev, { sender: "user", text }])
+      setIsTyping(true)
+
+      //Enviar texto al agente de VAPI
+      const vapi = getVapi()
+      vapi.send({
+        type: "add-message",
+        message: { role: "user", content: text }
+      })
+    }
+    setIsRecording(false)
+  } 
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -37,6 +90,14 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     }, 15000)
     return () => clearInterval(interval)
   }, [sessionId])
+
+
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight
+    }
+  }, [messages, isTyping])
+
 
   useEffect(() => {
     if (initializedRef.current) return
@@ -47,13 +108,8 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     const message = `The student's level is ${level} and the sessionId is ${sessionId}.`
     const vapi = getVapi()
 
+
     vapi.on("message", (msg: any) => {
-
-      if (msg.type === "transcript" && msg.role === "user") {
-        setMessages(prev => [...prev, { sender: "user", text: msg.transcript }])
-        setIsTyping(true)
-      }
-
       if (msg.type === "transcript" &&  msg.role === "assistant") {
         setMessages(prev => [...prev, { sender: "ai", text: msg.transcript }])
         setIsTyping(false)
@@ -62,13 +118,7 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
 
     vapi.on("call-start", () => {
       vapi.setMuted(true)
-      vapi.send({
-        type: "add-message",
-        message: {
-          role: "user",
-          content: message
-        }
-      })
+      vapi.send({type: "add-message", message: {role: "user", content: message}})
     })
 
     vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!)
@@ -77,27 +127,7 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
     initVapi()
   }, [sessionId])
 
-
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
-    }
-  }, [messages, isTyping])
-
-  const handleMicPress = () => {
-    const vapi = getVapi()
-
-    if (!isRecording) {
-      vapi.setMuted(false)
-      setIsRecording(true)
-      setIsListening(true)
-    } else {
-      vapi.setMuted(true)
-      setIsRecording(false)
-      setIsListening(false)
-    }
-  }
-
+  
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="wrapper">
@@ -122,12 +152,20 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
           
           <div className="w-full max-w-xl flex items-center gap-3 mt-6">
 
-            <input
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Type your message or unmute the mic to start speaking..."
-              className="flex-1 px-4 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            {isRecording ? (
+              <div className="flex-1 flex items-center justify-center bg-red-100 text-red-600 rounded-xl py-3 border border-red-300">
+                <div className="animate-pulse font-semibold">
+                  Recording audio...
+                </div>
+              </div>
+            ) : (
+              <input
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Type your message or press the microphone to speak"
+                className="flex-1 px-4 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            )}
 
             {inputText.trim().length === 0 ? (
               <button
@@ -141,13 +179,13 @@ export default function SpeakingChat({ sessionId }: { sessionId: string }) {
                 onClick={() => {
                   const vapi = getVapi()
                   setMessages(prev => [...prev, { sender: "user", text: inputText }])
-                  vapi.send({type: "add-message", message: { role: "user", content: inputText }})
-
+                  setIsTyping(true)
+                  vapi.send({ type: "add-message", message: { role: "user", content: inputText }})
                   setInputText("")
                 }}
                 className="cursor-pointer w-14 h-14 flex items-center justify-center rounded-full shadow-lg bg-primary text-primary-foreground"
               >
-                <SendHorizontal  size={26} />
+                <SendHorizontal size={26} />
               </button>
             )}
 
