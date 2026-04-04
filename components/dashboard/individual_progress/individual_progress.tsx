@@ -14,7 +14,7 @@ export default function IndividualProgress() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-10">
-            Individual Progress
+            Soon available...
           </h1>
 
         </div>

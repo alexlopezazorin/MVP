@@ -12,7 +12,8 @@ export default async function DashboardPage() {
   
     return (
       <div>
-        <Dashboard role={userData.profile.role} studentLevel={userData.profile.student_level} />
+        <Dashboard role={userData.role} studentLevel={userData.profile.student_level} />
       </div>
     )
 }
+

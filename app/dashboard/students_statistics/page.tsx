@@ -11,7 +11,7 @@ export default async function StudentsStatisticsPage() {
   }
 
   
-  if (userData.profile.role !== "teacher") {
+  if (userData.role !== "teacher") {
     redirect("/dashboard")
   }
 
